@@ -201,12 +201,11 @@ var vrniRacune = function(callback) {
 
 
 // Registracija novega uporabnika
-var izvedi_prijavo = streznik.post('/prijava', function(zahteva, odgovor) {
+streznik.post('/prijava', function(zahteva, odgovor) {
   var form = new formidable.IncomingForm();
 
   form.parse(zahteva, function (napaka1, polja, datoteke) {
     var napaka2 = false;
-    console.log("poop");
     try {
       var stmt = pb.prepare("\
         INSERT INTO Customer \
@@ -229,7 +228,6 @@ var izvedi_prijavo = streznik.post('/prijava', function(zahteva, odgovor) {
 
 // Prikaz strani za prijavo
 streznik.get('/prijava', function(zahteva, odgovor) {
-  console.log("poop");
   vrniStranke(function(napaka1, stranke) {
       vrniRacune(function(napaka2, racuni) {
         
@@ -249,7 +247,6 @@ streznik.post('/stranka', function(zahteva, odgovor) {
 
 // Odjava stranke
 streznik.post('/odjava', function(zahteva, odgovor) {
-    console.log("poop1");
     odgovor.redirect('/prijava')
 })
 
