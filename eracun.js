@@ -183,6 +183,8 @@ var vrniStranke = function(callback) {
   );
 }
 
+
+
 // Vrni račune iz podatkovne baze
 var vrniRacune = function(callback) {
   pb.all("SELECT Customer.FirstName || ' ' || Customer.LastName || ' (' || Invoice.InvoiceId || ') - ' || date(Invoice.InvoiceDate) AS Naziv, \
@@ -195,12 +197,16 @@ var vrniRacune = function(callback) {
   );
 }
 
+
+
+
 // Registracija novega uporabnika
-streznik.post('/prijava', function(zahteva, odgovor) {
+var izvedi_prijavo = streznik.post('/prijava', function(zahteva, odgovor) {
   var form = new formidable.IncomingForm();
-  
+
   form.parse(zahteva, function (napaka1, polja, datoteke) {
     var napaka2 = false;
+    console.log("poop");
     try {
       var stmt = pb.prepare("\
         INSERT INTO Customer \
@@ -209,20 +215,24 @@ streznik.post('/prijava', function(zahteva, odgovor) {
     	  Phone, Fax, Email, SupportRepId) \
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
       //TODO: add fields and finalize
-      //stmt.run("", "", "", "", "", "", "", "", "", "", "", 3); 
-      //stmt.finalize();
+      
+      stmt.run(polja.FirstName, polja.LastName,polja.CompileStep,polja.Address, polja.City, polja.State, polja.Country, polja.PostalCode, polja.Phone, polja.Fax, polja.Email, 3); 
+      stmt.finalize();
     } catch (err) {
       napaka2 = true;
     }
   
     odgovor.end();
   });
+  odgovor.redirect('/prijava') 
 })
 
 // Prikaz strani za prijavo
 streznik.get('/prijava', function(zahteva, odgovor) {
+  console.log("poop");
   vrniStranke(function(napaka1, stranke) {
       vrniRacune(function(napaka2, racuni) {
+        
         odgovor.render('prijava', {sporocilo: "", seznamStrank: stranke, seznamRacunov: racuni});  
       }) 
     });
@@ -239,7 +249,8 @@ streznik.post('/stranka', function(zahteva, odgovor) {
 
 // Odjava stranke
 streznik.post('/odjava', function(zahteva, odgovor) {
-    odgovor.redirect('/prijava') 
+    console.log("poop1");
+    odgovor.redirect('/prijava')
 })
 
 
