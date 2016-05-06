@@ -148,6 +148,35 @@ var strankaIzRacuna = function(racunId, callback) {
 
 // Izpis računa v HTML predstavitvi na podlagi podatkov iz baze
 streznik.post('/izpisiRacunBaza', function(zahteva, odgovor) {
+  var form = new formidable.IncomingForm();
+    
+    form.parse(zahteva, function (napaka1, polja, datoteke) {
+      var izbraniRacun = polja.seznamRacunov;
+      vrniRacune(function(napaka2, racuni) {
+              var ime_narocnika;
+              for(var obj in racuni){
+                if(racuni[obj].InvoiceId==izbraniRacun){
+                  ime_narocnika=racuni[obj].Naziv;
+                }
+                
+              }
+              var spl = ime_narocnika.split(" ");
+              
+              console.log(ime_narocnika);
+              
+              
+              /*
+              var output = '';
+              for (var property in racuni[1].Naziv) {
+             output += property + ': ' + racuni[1].Naziv
+             [property]+'; ';
+           }
+               console.log(output);  
+               */
+                  }) 
+      });
+  
+
   odgovor.end();
 })
 
