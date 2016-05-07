@@ -133,7 +133,9 @@ var pesmiIzRacuna = function(racunId, callback) {
     Track.TrackId IN (SELECT InvoiceLine.TrackId FROM InvoiceLine, Invoice \
     WHERE InvoiceLine.InvoiceId = Invoice.InvoiceId AND Invoice.InvoiceId = " + racunId + ")",
     function(napaka, vrstice) {
-      console.log(vrstice);
+      if(napaka){callback(false);}
+       else{callback(vrstice);}
+      
     })
 }
 
@@ -175,7 +177,6 @@ streznik.post('/izpisiRacunBaza', function(zahteva, odgovor) {
                   ime_narocnika += spl[obj]+" ";                }
               }
               console.log(ime_narocnika);
-              
               vrniStranke(function(napaka1, stranke) {
                 for(var obj in stranke){
                   if(stranke[obj].FirstName.localeCompare(spl[0])==0 && stranke[obj].LastName.localeCompare(spl[1])==0){
@@ -189,24 +190,33 @@ streznik.post('/izpisiRacunBaza', function(zahteva, odgovor) {
                     var company= stranke[obj].Company;
                   }
                 }
-var pesmi=[];
-            
-      odgovor.setHeader('content-type', 'text/xml');
-      odgovor.render('eslog', {
-        vizualiziraj:  true,
-        postavkeRacuna: pesmi,
-        NazivPartnerja1: ime_narocnika,
-        City: city,
-        Address: addres,
-        Company: company,
-        Country: country,
-        PostalCode: postalcode,
-        Phone: phone,
-        Fax: fax,
-        Email: email
-        
-        })
+     
+              
+              pesmiIzRacuna(izbraniRacun, function(pesmi) {
+              
+                odgovor.setHeader('content-type', 'text/xml');
+                odgovor.render('eslog', {
+                  vizualiziraj:  true,
+                  postavkeRacuna: pesmi,
+                  NazivPartnerja1: ime_narocnika,
+                  City: city,
+                  Address: addres,
+                  Company: company,
+                  Country: country,
+                  PostalCode: postalcode,
+                  Phone: phone,
+                  Fax: fax,
+                  Email: email
+                    
+                    })
+                    
               })
+                
+                
+                
+                
+               })
+              
             
       
               /*
@@ -225,7 +235,7 @@ var pesmi=[];
   else{
     odgovor.redirect('/prijava');
   }
-      });
+      })
   
   
 })
@@ -242,7 +252,16 @@ streznik.get('/izpisiRacun/:oblika', function(zahteva, odgovor) {
       odgovor.setHeader('content-type', 'text/xml');
       odgovor.render('eslog', {
         vizualiziraj: zahteva.params.oblika == 'html' ? true : false,
-        postavkeRacuna: pesmi
+        postavkeRacuna: pesmi,
+        NazivPartnerja1: "",
+        City: "",
+        Address: "",
+        Company: "",
+        Country: "",
+        PostalCode: "",
+        Phone: "",
+        Fax: "",
+        Email: ""
       })  
     }
   })
