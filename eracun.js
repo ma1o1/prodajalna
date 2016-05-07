@@ -10,6 +10,7 @@ var sqlite3 = require('sqlite3').verbose();
 var pb = new sqlite3.Database('chinook.sl3');
 
 // Priprava strežnika
+var napaka_m = "";
 var express = require('express');
 var expressSession = require('express-session');
 var streznik = express();
@@ -220,7 +221,12 @@ streznik.post('/prijava', function(zahteva, odgovor) {
     } catch (err) {
       napaka2 = true;
     }
-  
+    if(napaka2){
+      napaka_m= "Prišlo je do napake pri registraciji nove stranke. Prosim preverite vnešene podatke in poskusite znova.";
+    }
+    else{
+      napaka_m= "Stranka je bila uspešno registrirana.";
+    }
     odgovor.end();
   });
   odgovor.redirect('/prijava') 
@@ -231,7 +237,9 @@ streznik.get('/prijava', function(zahteva, odgovor) {
   vrniStranke(function(napaka1, stranke) {
       vrniRacune(function(napaka2, racuni) {
         
-        odgovor.render('prijava', {sporocilo: "", seznamStrank: stranke, seznamRacunov: racuni});  
+        odgovor.render('prijava', {sporocilo: napaka_m, seznamStrank: stranke, seznamRacunov: racuni});  
+        napaka_m = "";
+        
       }) 
     });
 })
