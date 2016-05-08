@@ -48,6 +48,11 @@ function davcnaStopnja(izvajalec, zanr) {
 
 // Prikaz seznama pesmi na strani
 streznik.get('/', function(zahteva, odgovor) {
+  if(!zahteva.session.prijavljena_s){
+    odgovor.redirect('/prijava'); 
+   
+  }
+  else{
   pb.all("SELECT Track.TrackId AS id, Track.Name AS pesem, \
           Artist.Name AS izvajalec, Track.UnitPrice * " +
           razmerje_usd_eur + " AS cena, \
@@ -69,7 +74,7 @@ streznik.get('/', function(zahteva, odgovor) {
         odgovor.render('seznam', {seznamPesmi: vrstice});
       }
   })
-})
+}})
 
 // Dodajanje oz. brisanje pesmi iz košarice
 streznik.get('/kosarica/:idPesmi', function(zahteva, odgovor) {
@@ -134,7 +139,9 @@ var pesmiIzRacuna = function(racunId, callback) {
     Track.TrackId IN (SELECT InvoiceLine.TrackId FROM InvoiceLine, Invoice \
     WHERE InvoiceLine.InvoiceId = Invoice.InvoiceId AND Invoice.InvoiceId = " + racunId + ")",
     function(napaka, vrstice) {
-      console.log(vrstice);
+      if(napaka){callback(false);}
+       else{callback(vrstice);}
+      
     })
 }
 
@@ -149,7 +156,94 @@ var strankaIzRacuna = function(racunId, callback) {
 
 // Izpis računa v HTML predstavitvi na podlagi podatkov iz baze
 streznik.post('/izpisiRacunBaza', function(zahteva, odgovor) {
-  odgovor.end();
+  var form = new formidable.IncomingForm();
+   
+    form.parse(zahteva, function (napaka1, polja, datoteke) {
+      var izbraniRacun = polja.seznamRacunov;
+      console.log(izbraniRacun);
+      if(izbraniRacun>-1){ 
+      vrniRacune(function(napaka2, racuni) {
+              var ime_narocnika;
+              for(var obj in racuni){
+                if(racuni[obj].InvoiceId==izbraniRacun){
+                  ime_narocnika=racuni[obj].Naziv;
+                  break;
+                  
+                }
+                
+              }
+              var spl = ime_narocnika.split(" ");
+              ime_narocnika="";
+              for(var obj in spl){
+                if(spl[obj].charAt(0)=='('){
+                  break;
+                }
+                else{
+                  
+                  ime_narocnika += spl[obj]+" ";                }
+              }
+              console.log(ime_narocnika);
+              vrniStranke(function(napaka1, stranke) {
+                for(var obj in stranke){
+                  if(stranke[obj].FirstName.localeCompare(spl[0])==0 && stranke[obj].LastName.localeCompare(spl[1])==0){
+                    var addres = stranke[obj].Address;
+                    var city = stranke[obj].City;
+                    var country = stranke[obj].Country;
+                    var postalcode = stranke[obj].PostalCode;
+                    var phone = stranke[obj].Phone;
+                    var email = stranke[obj].Email;
+                    var fax = stranke[obj].Fax;
+                    var company= stranke[obj].Company;
+                  }
+                }
+     
+              
+              pesmiIzRacuna(izbraniRacun, function(pesmi) {
+              
+                odgovor.setHeader('content-type', 'text/xml');
+                odgovor.render('eslog', {
+                  vizualiziraj:  true,
+                  postavkeRacuna: pesmi,
+                  NazivPartnerja1: ime_narocnika,
+                  City: city,
+                  Address: addres,
+                  Company: company,
+                  Country: country,
+                  PostalCode: postalcode,
+                  Phone: phone,
+                  Fax: fax,
+                  Email: email
+                    
+                    })
+                    
+              })
+                
+                
+                
+                
+               })
+              
+            
+      
+              /*
+              
+                 var output = '';
+              for (var property in stranke[1]) {
+             output += property + ': ' + stranke[1]
+             [property]+'; ';
+           }
+               console.log(output); 
+                
+               */
+                  }) 
+                  
+      }
+  else{
+    odgovor.redirect('/prijava');
+  }
+      })
+  
+  
 })
 
 // Izpis računa v HTML predstavitvi ali izvorni XML obliki
@@ -161,10 +255,33 @@ streznik.get('/izpisiRacun/:oblika', function(zahteva, odgovor) {
       odgovor.send("<p>V košarici nimate nobene pesmi, \
         zato računa ni mogoče pripraviti!</p>");
     } else {
+      vrniStranke(function(napaka1, stranke) {
+                  var obj = zahteva.session.prijavljena_s-1;
+                    var ime_narocnika=stranke[obj].FirstName + " " + stranke[obj].LastName;
+                    var addres = stranke[obj].Address;
+                    var city = stranke[obj].City;
+                    var country = stranke[obj].Country;
+                    var postalcode = stranke[obj].PostalCode;
+                    var phone = stranke[obj].Phone;
+                    var email = stranke[obj].Email;
+                    var fax = stranke[obj].Fax;
+                    var company= stranke[obj].Company;
+                  
+                
       odgovor.setHeader('content-type', 'text/xml');
       odgovor.render('eslog', {
         vizualiziraj: zahteva.params.oblika == 'html' ? true : false,
-        postavkeRacuna: pesmi
+        postavkeRacuna: pesmi,
+        NazivPartnerja1: ime_narocnika,
+        City: city,
+        Address: addres,
+        Company: company,
+        Country: country,
+        PostalCode: postalcode,
+        Phone: phone,
+        Fax: fax,
+        Email: email
+      })
       })  
     }
   })
@@ -249,13 +366,20 @@ streznik.post('/stranka', function(zahteva, odgovor) {
   var form = new formidable.IncomingForm();
   
   form.parse(zahteva, function (napaka1, polja, datoteke) {
+    zahteva.session.prijavljena_s = polja.seznamStrank;
+    
     odgovor.redirect('/')
+     
   });
 })
 
 // Odjava stranke
 streznik.post('/odjava', function(zahteva, odgovor) {
-    odgovor.redirect('/prijava')
+
+    zahteva.session.prijavljena_s = null;
+    odgovor.redirect('/prijava') 
+    
+
 })
 
 
@@ -263,3 +387,11 @@ streznik.post('/odjava', function(zahteva, odgovor) {
 streznik.listen(process.env.PORT, function() {
   console.log("Strežnik pognan!");
 })
+/* var output = '';
+for (var property in polja) {
+  output += property + ': ' + polja
+  [property]+'; ';
+}
+    console.log(output); 
+    
+    */
