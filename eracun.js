@@ -254,19 +254,33 @@ streznik.get('/izpisiRacun/:oblika', function(zahteva, odgovor) {
       odgovor.send("<p>V košarici nimate nobene pesmi, \
         zato računa ni mogoče pripraviti!</p>");
     } else {
+      vrniStranke(function(napaka1, stranke) {
+                  var obj = zahteva.session.prijavljena_s-1;
+                    var ime_narocnika=stranke[obj].FirstName + " " + stranke[obj].LastName;
+                    var addres = stranke[obj].Address;
+                    var city = stranke[obj].City;
+                    var country = stranke[obj].Country;
+                    var postalcode = stranke[obj].PostalCode;
+                    var phone = stranke[obj].Phone;
+                    var email = stranke[obj].Email;
+                    var fax = stranke[obj].Fax;
+                    var company= stranke[obj].Company;
+                  
+                
       odgovor.setHeader('content-type', 'text/xml');
       odgovor.render('eslog', {
         vizualiziraj: zahteva.params.oblika == 'html' ? true : false,
         postavkeRacuna: pesmi,
-        NazivPartnerja1: "",
-        City: "",
-        Address: "",
-        Company: "",
-        Country: "",
-        PostalCode: "",
-        Phone: "",
-        Fax: "",
-        Email: ""
+        NazivPartnerja1: ime_narocnika,
+        City: city,
+        Address: addres,
+        Company: company,
+        Country: country,
+        PostalCode: postalcode,
+        Phone: phone,
+        Fax: fax,
+        Email: email
+      })
       })  
     }
   })
